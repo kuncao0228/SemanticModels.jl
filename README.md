@@ -26,7 +26,6 @@ the julia source code file `examples/epicookbook/notebooks/SimpleDeterministicMo
 
 See the tests and documentation for example usage.
 
-
 ## Documentation
 
 There is a docs folder which contains the documentation, including reports sent to our sponsor, DARPA.
