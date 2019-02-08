@@ -399,7 +399,7 @@ global G_temp = MetaDiGraph()
 
 for i in 1:num_files
 
-    output_path = "../examples/epicookbook/data/edges_from_code_$i.jl"
+    output_path = "/home/infvie/code/gtri/semanticmodels/examples/demo_edges.jl"
 
     path = ARGS[i]
     @info "Parsing julia script" file=path
@@ -442,8 +442,8 @@ for i in 1:num_files
 end
 
 @info("All markdown and code files have been parsed; writing final knowledge graph to dot file")
-dot_file_path = "../examples/epicookbook/data/dot_file_ex1.dot"
+dot_file_path = "/home/infvie/code/gtri/semanticmodels/examples/demo_edges.dot"
 Edges.write_graph_to_dot_file(G_temp, dot_file_path, "G_code_and_markdown", vcolors)
 
 # Generate svg file
-run(`dot -Tsvg -O $dot_file_path`)
+run(`dot -Tpng -O $dot_file_path`)

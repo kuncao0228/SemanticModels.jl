@@ -9,7 +9,7 @@
 #       format_version: '1.3'
 #       jupytext_version: 0.8.6
 #   kernelspec:
-#     display_name: Julia 1.0.0
+#     display_name: Julia 1.0.3
 #     language: julia
 #     name: julia-1.0
 # ---
@@ -85,7 +85,7 @@ function create_bidirectional_edges(edges_df)
     end
     return edges_df
 end
-        
+
 
 function generate_kg(vertices, edges)
     n_vertices = size(vertices,1)

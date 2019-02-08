@@ -4,7 +4,7 @@ using SemanticModels.Parsers
 using SemanticModels.Dubstep
 
 # source of original problem
-include("../examples/epicookbook/src/SEIRmodel.jl")
+include("/home/infvie/code/gtri/semanticmodels/examples/epicookbook/src/SEIRmodel.jl")
 
 #the functions we want to modify
 seir_ode = SEIRmodel.seir_ode

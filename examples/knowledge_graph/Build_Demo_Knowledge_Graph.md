@@ -8,7 +8,7 @@ jupyter:
       format_version: '1.0'
       jupytext_version: 0.8.6
   kernelspec:
-    display_name: Julia 1.0.0
+    display_name: Julia 1.0.3
     language: julia
     name: julia-1.0
 ---
@@ -92,8 +92,8 @@ function create_bidirectional_edges(edges_df)
     end
     return edges_df
 end
-        
 ```
+
 
 ```julia
 function generate_kg(vertices, edges)
@@ -127,8 +127,8 @@ function generate_kg(vertices, edges)
     
     return g
 end
-
 ```
+
 
 ```julia
 schema = CSV.read("./data/kg_schema.csv")
