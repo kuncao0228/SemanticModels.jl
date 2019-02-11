@@ -218,23 +218,69 @@ function add(a, b)
     return c
 end
 
+using Test
 
-ctx = TraceCtx(pass=ExtractPass, metadata = (Any[], Any[]))
-# before_time = time()
-result = Cassette.overdub(ctx, add, a, b)
-@test result == a + b
-@show result
-# println("done (took ", time() - before_time, " seconds)")
-@info "Analyzing function g"
-g(x) = begin
-    y = add(x.*x, x)
-    z = 1
-    v = y .- z
-    s = sum(v)
-    return s
+@testset "VarExtract" begin
+    ctx = TraceCtx(pass=ExtractPass, metadata = (Any[], Any[]))
+    # before_time = time()
+    result = Cassette.overdub(ctx, add, a, b)
+    @test result == a + b
+    @show result
+    # println("done (took ", time() - before_time, " seconds)")
+    @info "Analyzing function g"
+    g(x) = begin
+        y = add(x.*x, x)
+        z = 1
+        v = y .- z
+        s = sum(v)
+        return s
+    end
+
+    ctx = TraceCtx(pass=ExtractPass, metadata = (Any[], Any[]))
+    result = Cassette.overdub(ctx, g, [2,2,2])
+    @info "Dumping ctx"
+    dump(ctx.metadata)
 end
 
-ctx = TraceCtx(pass=ExtractPass, metadata = (Any[], Any[]))
-result = Cassette.overdub(ctx, g, [2,2,2])
-dump(ctx.metadata)
+@testset "TraceExtract" begin
+    g(x) = begin
+        y = add(x.*x, -x)
+        z = 1
+        v = y .- z
+        s = sum(v)
+        return s
+    end
+    h(x) = begin
+        z = g(x)
+        zed = sqrt(z)
+        return zed
+    end
+
+    # This is the success condition
+    ctx = TraceCtx(pass=ExtractPass, metadata = (Any[], Any[]))
+    result = Cassette.overdub(ctx, h, [2,2,2])
+    dump(ctx.metadata)
+
+    # This is the error condition
+    # ctx = TraceCtx(pass=ExtractPass, metadata = (Any[], Any[]))
+    # try
+    #     result = Cassette.overdub(ctx, h, [2,2,2]./10)
+    # catch DomainError
+    #     dump(ctx.metadata)
+    # end
+end
+
+# fst, snd = ctx.metadata
+# @info "Textifying ctx"
+# text(tree, label) = begin
+#     println("$label, ")
+#     pair = tree[1]
+#     println(pair.first)
+#     println(typeof(pair.second))
+#     if typeof(tree) <: Pair
+#         text(tree, "")
+#     end
+
+# end
+# text(fst, "")
 end
