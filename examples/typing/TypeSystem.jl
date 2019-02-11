@@ -13,15 +13,16 @@
 #     name: julia-1.0
 # ---
 
-# ### Example
-# This is an example of how we will be returning the type of the args to a function.
-
 using Cassette;
+using DifferentialEquations;
 
 # +
-Cassette.@context typCtx
+# define the context we will use
+ctx = Cassette.@context typCtx
 
+# add boilerplate for functionality
 function Cassette.overdub(ctx::typCtx, args...)
+    println(typeof.(args))
     if Cassette.canrecurse(ctx, args...)
         newctx = Cassette.similarcontext(ctx, metadata = ctx.metadata)
         return Cassette.recurse(newctx, args...)
@@ -29,68 +30,50 @@ function Cassette.overdub(ctx::typCtx, args...)
         return Cassette.fallback(ctx, args...)
     end
 end
-# -
+    
+function Cassette.canrecurse(ctx::typCtx,::typeof(ODEProblem), args...)
+    return false
+end
 
-function calculator(a,b)
-    a + b
-end 
-
-Cassette.overdub(::typCtx, f, args...) = println(typeof(args))
-
-Cassette.overdub(typCtx(),calculator,19.5,3)
-
-Cassette.overdub(typCtx(),calculator,19,2)
-
-# ### Use Case
-# In this example, we will be using the raw text of the SIR model as a test case.
+function Cassette.canrecurse(ctx::typCtx,::typeof(Base.vect), args...)
+    return false
+end
+    
+function Cassette.overdub(ctx::typCtx,::typeof(ODEProblem), args...)
+    return (src=args[2:end],dst=nothing,func=typeof(ODEProblem))
+end
 
 # +
-using DifferentialEquations
-
-function sir_ode(du, u, p, t)  
-    #Infected per-Capita Rate
-    β = p[1]
-    #Recover per-capita rate
-    γ = p[2]
+function main()
     
-    #Susceptible Individuals
-    S = u[1]
-    #Infected by Infected Individuals
-    I = u[2]
-   
-    du[1] = -β * S * I
-    du[2] = β * S * I - γ * I
-    du[3] = γ * I
+    # define our ode
+    function sir_ode(du, u, p, t)  
+        #Infected per-Capita Rate
+        β = p[1]
+        #Recover per-capita rate
+        γ = p[2]
+        #Susceptible Individuals
+        S = u[1]
+        #Infected by Infected Individuals
+        I = u[2]
+
+        du[1] = -β * S * I
+        du[2] = β * S * I - γ * I
+        du[3] = γ * I
+    end
+
+    #Pram = (Infected Per Capita Rate, Recover Per Capita Rate)
+    pram = [0.1,0.05]
+    #Initial Prams = (Susceptible Individuals, Infected by Infected Individuals)
+    init = [0.99,0.01,0.0]
+    tspan = (0.0,200.0)
+    
+    # create a var to our problem
+    sir_prob = ODEProblem(sir_ode, init, tspan, pram)
+    
 end
-
-#Pram = (Infected Per Capita Rate, Recover Per Capita Rate)
-pram = [0.1,0.05]
-#Initial Prams = (Susceptible Individuals, Infected by Infected Individuals)
-init = [0.99,0.01,0.0]
-tspan = (0.0,200.0)
-
-sir_prob = ODEProblem(sir_ode, init, tspan, pram)
-
-sir_sol = solve(sir_prob, saveat = 0.1);
-
-# Visualization
-using Plots
-plot(sir_sol,xlabel="Time",ylabel="Number")
-
-function sir_ode2(du,u,p,t)
-    S,I,R = u
-    b,g = p
-    du[1] = -b*S*I
-    du[2] = b*S*I-g*I
-    du[3] = g*I
-end
-
-parms = [0.1,0.05]
-init = [0.99,0.01,0.0]
-tspan = (0.0,200.0)
-
-sir_prob2 = ODEProblem(sir_ode2,init,tspan,parms)
-sir_sol = solve(sir_prob2,saveat = 0.1);
 # -
 
-Cassette.overdub(typCtx(),ODEProblem,sir_ode,init,tspan,parms)
+Cassette.overdub(typCtx(),main)
+
+
