@@ -261,13 +261,13 @@ end
     result = Cassette.overdub(ctx, h, [2,2,2])
     dump(ctx.metadata)
 
-    # This is the error condition
-    # ctx = TraceCtx(pass=ExtractPass, metadata = (Any[], Any[]))
-    # try
-    #     result = Cassette.overdub(ctx, h, [2,2,2]./10)
-    # catch DomainError
-    #     dump(ctx.metadata)
-    # end
+    This is the error condition
+    ctx = TraceCtx(pass=ExtractPass, metadata = (Any[], Any[]))
+    try
+        result = Cassette.overdub(ctx, h, [2,2,2]./10)
+    catch DomainError
+        dump(ctx.metadata)
+    end
 end
 
 # fst, snd = ctx.metadata
