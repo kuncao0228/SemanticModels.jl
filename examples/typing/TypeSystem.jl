@@ -22,7 +22,6 @@ ctx = Cassette.@context typCtx
 
 # add boilerplate for functionality
 function Cassette.overdub(ctx::typCtx, args...)
-    println(typeof.(args))
     if Cassette.canrecurse(ctx, args...)
         newctx = Cassette.similarcontext(ctx, metadata = ctx.metadata)
         return Cassette.recurse(newctx, args...)
@@ -31,19 +30,27 @@ function Cassette.overdub(ctx::typCtx, args...)
     end
 end
     
-function Cassette.canrecurse(ctx::typCtx,::typeof(ODEProblem), args...)
+function Cassette.canrecurse(ctx::typCtx,::typeof(ODEProblem),args...)
     return false
 end
 
-function Cassette.canrecurse(ctx::typCtx,::typeof(Base.vect), args...)
+function Cassette.canrecurse(ctx::typCtx,::typeof(Base.vect),args...)
     return false
 end
     
-function Cassette.overdub(ctx::typCtx,::typeof(ODEProblem), args...)
-    return (src=args[2:end],dst=nothing,func=typeof(ODEProblem))
+function Cassette.overdub(ctx::typCtx,::typeof(ODEProblem),args...)
+    println("ODE Formulation:")
+    println( (src=typeof(args[2:end]),dst=nothing,func=typeof(ODEProblem)) )
+    return ODEProblem(args...) 
 end
 
-# +
+function Cassette.overdub(ctx::typCtx,::typeof(solve),args...)
+    sol = solve(args...)
+    println("Solver:")
+    println((src=typeof(ODEProblem),dst=typeof((sol.t,sol.u)),func=typeof(solve)))
+end
+# -
+
 function main()
     
     # define our ode
@@ -70,10 +77,7 @@ function main()
     
     # create a var to our problem
     sir_prob = ODEProblem(sir_ode, init, tspan, pram)
-    
+    solution = solve(sir_prob)
 end
-# -
 
 Cassette.overdub(typCtx(),main)
-
-
