@@ -16,8 +16,6 @@
 using Cassette;
 using DifferentialEquations;
 
-# The model that we would like to edit.
-
 # +
 function main()
     
@@ -50,8 +48,6 @@ function main()
 end
 # -
 
-# Define a data structure that we will use to collect the edge information we would like to have.
-
 """ 
 trace_collector(func, args, ret, subtrace)
 
@@ -64,52 +60,64 @@ mutable struct trace_collector
     subtrace::Vector{trace_collector}
 end
 
-"""    trace_collect(func, args...)
+"""    
+trace_collect(func, args...)
 
-    creates a new trace_collector logging the input argument types and function name. You have to set the `ret` field after you call the function. 
-    This constructor creates the subtrace field for use in Cassette.similarcontext.
+creates a new trace_collector logging the input argument types and function name. You have to set the `ret` field after you call the function. 
+This constructor creates the subtrace field for use in Cassette.similarcontext.
 """
 function trace_collect(func, args...)
     return trace_collector(func, typeof.(args), nothing, trace_collector[])
 end
 
-function Cassette.canrecurse(ctx::typCtx,::typeof(ODEProblem),args...)
-    return false
-end
+# define the 
+Cassette.@context typeCtx;
 
-function Cassette.canrecurse(ctx::typCtx,::typeof(Base.vect),args...)
-    return false
-end
+extractor = trace_collector[]
 
+ctx = typeCtx(metadata = extractor)
 
-
-# define our context
-ctx = Cassette.@context typCtx
-
-# boilerplate for functionality
-function Cassette.overdub(ctx::typCtx, args...)
-    @show args
-    @show ctx.metadata
+# add boilerplate for functionality
+function Cassette.overdub(ctx::typeCtx, args...)
+    c = trace_collect(args...)
+    push!(ctx.metadata, c)
     if Cassette.canrecurse(ctx, args...)
-        newctx = Cassette.similarcontext(ctx, metadata = ctx.metadata)
-        return Cassette.recurse(newctx, args...)
+        newctx = Cassette.similarcontext(ctx, metadata = c.subtrace)
+        z = Cassette.recurse(newctx, args...)
+        c.ret = typeof(z)
+        return z
     else
-        println("Fallback loop")
-        return Cassette.fallback(ctx, args...)
+        z = Cassette.fallback(ctx, args...)
+        c.ret = typeof(z)
+        return z
     end
 end
 
-function Cassette.overdub(ctx::typCtx,::typeof(ODEProblem),args...)
-    println("ODE Formulation:")
-    println( (src=typeof(args[2:end]),dst=nothing,func=typeof(ODEProblem)) )
-    return ODEProblem(args...) 
+# +
+function Cassette.canrecurse(ctx::typeCtx,::typeof(ODEProblem),args...)
+    return false
 end
 
-function Cassette.overdub(ctx::typCtx,::typeof(solve),args...)
-    sol = solve(args...)
-    println("Solver:")
-    println((src=typeof(ODEProblem),dst=typeof((sol.t,sol.u)),func=typeof(solve)))
+function Cassette.canrecurse(ctx::typeCtx,::typeof(Base.vect),args...)
+    return false
+end
+# -
+
+Cassette.overdub(ctx,main)
+
+extractor
+
+for frame in extractor
+    println(frame.func, frame.args)
 end
 
+function foo(collector::trace_collector)
+    println(collector.func, collector.args)
+    for frame in collector.subtrace
+         foo(frame)
+    end
+end
 
-Cassette.overdub(typCtx(),main)
+foo(extractor[1])
+
+
